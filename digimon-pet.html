@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffd700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="数码宝贝">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>数码宝贝养成 - 沙古牙兽</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Microsoft YaHei', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 90%;
+        }
+
+        .title {
+            color: #ffd700;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .stage-name {
+            color: #00ff88;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .digimon-name {
+            color: #ff6b9d;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(255, 107, 157, 0.6);
+            font-weight: bold;
+        }
+
+        .pet-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 20px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .pet-container:active {
+            transform: scale(0.95);
+        }
+
+        .pet-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+            transition: filter 0.3s;
+        }
+
+        .pet-container:hover .pet-image {
+            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8));
+        }
+
+        .click-effect {
+            position: absolute;
+            pointer-events: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            animation: floatUp 0.8s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(1.5);
+            }
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-label {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            border-radius: 15px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            color: #fff;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .hint {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+
+        .evolve-animation {
+            animation: evolve 1s ease-in-out;
+        }
+
+        @keyframes evolve {
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+            }
+            50% {
+                transform: scale(1.3);
+                filter: drop-shadow(0 0 50px rgba(255, 255, 255, 1)) brightness(2);
+            }
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+            }
+        }
+
+        .evolve-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffd700, #ff6b6b);
+            color: #fff;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            z-index: 1000;
+            animation: popIn 0.5s ease-out;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            70% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .max-level {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(255, 215, 0, 1), 0 0 30px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 215, 0, 0.6);
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 1;
+            }
+        }
+
+        /* 开场黑幕样式 */
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease;
+        }
+
+        .intro-overlay.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .intro-text {
+            color: #fff;
+            font-size: 2rem;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            max-width: 80%;
+            line-height: 1.8;
+        }
+
+        .intro-text.visible {
+            opacity: 1;
+        }
+
+        .game-container {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .game-container.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 开场黑幕 -->
+    <div class="intro-overlay" id="introOverlay">
+        <div class="intro-text" id="introText"></div>
+    </div>
+
+    <div class="particles" id="particles"></div>
+        
+    <audio id="bgMusic" loop>
+        <source src="dreamer.flac" type="audio/flac">
+    </audio>
+    
+    <div class="game-container" id="gameContainer">
+        <h1 class="title">🎮 数码宝贝养成</h1>
+        <h2 class="stage-name" id="stageName">幼年期</h2>
+                <h3 class="digimon-name" id="digimonName">狐裘兽</h3>
+        
+        <div class="pet-container" id="petContainer">
+            <img src="shaguyashou01.gif" alt="沙古牙兽" class="pet-image" id="petImage">
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-label" id="progressLabel">养成进度: 0 / 10</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="currentPoints">0</div>
+                <div class="stat-label">当前养成点</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalClicks">0</div>
+                <div class="stat-label">总点击次数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="currentStage">1</div>
+                <div class="stat-label">当前阶段</div>
+            </div>
+        </div>
+        
+        <p class="hint">💡 点击宠物增加养成值！</p>
+    </div>
+
+    <script>
+        // 游戏配置
+        const stages = [
+            { name: '幼年期', points: 10, image: 'shaguyashou01.gif', digimonName: '狐裘兽' },
+            { name: '成长期', points: 20, image: 'shaguyashou02.gif', digimonName: '妖狐兽' },
+            { name: '成熟期', points: 30, image: 'shaguyashou03.gif', digimonName: '九尾兽' },
+            { name: '完全体', points: 40, image: 'shaguyashou04.gif', digimonName: '祭师兽' },
+            { name: '究极体', points: 50, image: 'shaguyashou05.gif', digimonName: '沙古牙兽' }
+        ];
+
+        // 游戏状态
+        let currentStage = 0;
+        let currentPoints = 0;
+        let totalClicks = 0;
+
+        // DOM 元素
+        const petContainer = document.getElementById('petContainer');
+        const petImage = document.getElementById('petImage');
+        const stageName = document.getElementById('stageName');
+                const digimonNameEl = document.getElementById('digimonName');
+        const progressLabel = document.getElementById('progressLabel');
+        const progressFill = document.getElementById('progressFill');
+        const currentPointsEl = document.getElementById('currentPoints');
+        const totalClicksEl = document.getElementById('totalClicks');
+        const currentStageEl = document.getElementById('currentStage');
+
+        // 创建背景粒子
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 3 + 's';
+                particle.style.width = (Math.random() * 10 + 5) + 'px';
+                particle.style.height = particle.style.width;
+                container.appendChild(particle);
+            }
+        }
+
+        // 创建点击效果
+        function createClickEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'click-effect';
+            effect.textContent = '+1';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            petContainer.appendChild(effect);
+            
+            setTimeout(() => {
+                effect.remove();
+            }, 800);
+        }
+
+        // 显示进化消息
+        function showEvolveMessage(newStageName) {
+            const message = document.createElement('div');
+            message.className = 'evolve-message';
+            message.innerHTML = `🎉 恭喜进化！<br>${newStageName}`;
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                message.remove();
+            }, 2000);
+        }
+
+        // 更新UI
+        function updateUI() {
+            const stage = stages[currentStage];
+            stageName.textContent = stage.name;
+            digimonNameEl.textContent = stage.digimonName;
+            petImage.src = stage.image;
+            
+            const progress = (currentPoints / stage.points) * 100;
+            progressFill.style.width = Math.min(progress, 100) + '%';
+            progressLabel.textContent = `养成进度: ${currentPoints} / ${stage.points}`;
+            
+            currentPointsEl.textContent = currentPoints;
+            totalClicksEl.textContent = totalClicks;
+            currentStageEl.textContent = currentStage + 1;
+            
+            // 检查是否已经是最高等级
+            if (currentStage >= stages.length - 1 && currentPoints >= stages[currentStage].points) {
+                const hint = document.querySelector('.hint');
+                hint.classList.add('max-level');
+                hint.textContent = '🏆 恭喜！已达到究极体最高等级！';
+            }
+        }
+
+        // 进化
+        function evolve() {
+            if (currentStage < stages.length - 1) {
+                currentStage++;
+                currentPoints = 0;
+                
+                petImage.classList.add('evolve-animation');
+                setTimeout(() => {
+                    petImage.classList.remove('evolve-animation');
+                }, 1000);
+                
+                showEvolveMessage(stages[currentStage].name);
+                updateUI();
+            }
+        }
+
+        // 点击事件
+        petContainer.addEventListener('click', function(e) {
+            const rect = petContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            createClickEffect(x, y);
+            
+            totalClicks++;
+            currentPoints++;
+            
+            const stage = stages[currentStage];
+            
+            if (currentPoints >= stage.points) {
+                if (currentStage < stages.length - 1) {
+                    evolve();
+                } else {
+                    // 已经是最高等级
+                    updateUI();
+                }
+            } else {
+                updateUI();
+            }
+        });
+
+        // 背景音乐
+        const bgMusic = document.getElementById('bgMusic');
+        bgMusic.volume = 0.5;
+        
+        // 点击页面任意位置播放音乐
+        document.addEventListener('click', function() {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log('音乐播放需要用户交互'));
+            }
+        }, { once: true });
+
+        // 开场动画
+        const introOverlay = document.getElementById('introOverlay');
+        const introText = document.getElementById('introText');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        const introLines = [
+            '妖狐兽，你为什么不进化？',
+            '现在，我来帮你吧。'
+        ];
+        
+        let currentLine = 0;
+        
+        function showIntroLine() {
+            if (currentLine < introLines.length) {
+                introText.textContent = introLines[currentLine];
+                introText.classList.add('visible');
+                
+                setTimeout(() => {
+                    introText.classList.remove('visible');
+                    setTimeout(() => {
+                        currentLine++;
+                        showIntroLine();
+                    }, 1000); // 渐隐后等待1秒
+                }, 2500); // 显示2.5秒
+            } else {
+                // 台词播完，隐藏黑幕，显示游戏
+                setTimeout(() => {
+                    introOverlay.classList.add('fade-out');
+                    gameContainer.classList.add('visible');
+                    
+                    // 移除黑幕元素
+                    setTimeout(() => {
+                        introOverlay.remove();
+                    }, 1000);
+                }, 500);
+            }
+        }
+        
+        // 开始开场动画
+        setTimeout(() => {
+            showIntroLine();
+        }, 500);
+
+        // 初始化
+        createParticles();
+        updateUI();
+
+        // 注册 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('Service Worker 注册成功:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker 注册失败:', error);
+                    });
+            });
+        }
+
+        // 添加安装提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // 显示安装按钮
+            const installBtn = document.createElement('button');
+            installBtn.id = 'installBtn';
+            installBtn.textContent = '📲 安装到手机';
+            installBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: linear-gradient(135deg, #ffd700, #ff6b6b);
+                border: none;
+                border-radius: 25px;
+                color: #fff;
+                font-size: 1rem;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+                z-index: 1000;
+                transition: transform 0.2s;
+            `;
+            installBtn.onmouseover = () => installBtn.style.transform = 'scale(1.05)';
+            installBtn.onmouseout = () => installBtn.style.transform = 'scale(1)';
+            
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.remove();
+                    }
+                    deferredPrompt = null;
+                }
+            });
+            
+            document.body.appendChild(installBtn);
+        });
+    </script>
+</body>
+</html>
