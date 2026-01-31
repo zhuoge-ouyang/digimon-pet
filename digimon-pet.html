@@ -299,6 +299,23 @@
         .game-container.visible {
             opacity: 1;
         }
+
+        .reset-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: rgba(255, 100, 100, 0.3);
+            border: 2px solid rgba(255, 100, 100, 0.5);
+            border-radius: 20px;
+            color: #ff9999;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 100, 100, 0.5);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -345,6 +362,7 @@
         </div>
         
         <p class="hint">💡 点击宠物增加养成值！</p>
+        <button class="reset-btn" id="resetBtn">🔄 重置进度</button>
     </div>
 
     <script>
@@ -394,6 +412,24 @@
                 }
             }
             return false;
+        }
+
+        // 重置游戏进度
+        function resetGame() {
+            if (confirm('确定要重置所有进度吗？这将清除所有存档！')) {
+                currentStage = 0;
+                currentPoints = 0;
+                totalClicks = 0;
+                localStorage.removeItem('digimonGameState');
+                
+                // 重置提示文字
+                const hint = document.querySelector('.hint');
+                hint.classList.remove('max-level');
+                hint.textContent = '💡 点击宠物增加养成值！';
+                
+                updateUI();
+                alert('进度已重置！');
+            }
         }
 
         // DOM 元素
@@ -474,19 +510,38 @@
         // 进化
         function evolve() {
             if (currentStage < stages.length - 1) {
-                currentStage++;
-                currentPoints = 0;
+                const nextStage = currentStage + 1;
+                const nextStageData = stages[nextStage];
                 
-                // 保存进化后的状态
-                saveGameState();
+                // 预加载新图片
+                const preloadImg = new Image();
+                preloadImg.src = nextStageData.image;
                 
+                // 开始进化动画
                 petImage.classList.add('evolve-animation');
+                
+                // 在动画高潮时刻（500ms，最亮的时候）切换图片
+                setTimeout(() => {
+                    currentStage = nextStage;
+                    currentPoints = 0;
+                    
+                    // 更新图片和UI
+                    petImage.src = nextStageData.image;
+                    stageName.textContent = nextStageData.name;
+                    digimonNameEl.textContent = nextStageData.digimonName;
+                    
+                    // 保存进化后的状态
+                    saveGameState();
+                    
+                    // 显示进化消息
+                    showEvolveMessage(nextStageData.name);
+                }, 500);
+                
+                // 动画结束后移除动画类并更新其他UI
                 setTimeout(() => {
                     petImage.classList.remove('evolve-animation');
+                    updateUI();
                 }, 1000);
-                
-                showEvolveMessage(stages[currentStage].name);
-                updateUI();
             }
         }
 
@@ -578,6 +633,9 @@
         // 加载保存的游戏状态
         const hasExistingSave = loadGameState();
         updateUI();
+        
+        // 重置按钮事件
+        document.getElementById('resetBtn').addEventListener('click', resetGame);
         
         // 如果有存档，检查是否需要显示最高等级提示
         if (hasExistingSave && currentStage >= stages.length - 1 && currentPoints >= stages[currentStage].points) {
