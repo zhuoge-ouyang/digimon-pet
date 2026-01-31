@@ -427,7 +427,17 @@
                 hint.classList.remove('max-level');
                 hint.textContent = '💡 点击宠物增加养成值！';
                 
-                updateUI();
+                // 强制更新图片（添加时间戳防止缓存）
+                const firstStage = stages[0];
+                document.getElementById('petImage').src = firstStage.image + '?t=' + Date.now();
+                document.getElementById('stageName').textContent = firstStage.name;
+                document.getElementById('digimonName').textContent = firstStage.digimonName;
+                document.getElementById('progressLabel').textContent = '养成进度: 0 / ' + firstStage.points;
+                document.getElementById('progressFill').style.width = '0%';
+                document.getElementById('currentPoints').textContent = '0';
+                document.getElementById('totalClicks').textContent = '0';
+                document.getElementById('currentStage').textContent = '1';
+                
                 alert('进度已重置！');
             }
         }
