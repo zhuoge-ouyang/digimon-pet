@@ -1,4 +1,4 @@
-const CACHE_NAME = 'digimon-pet-v1';
+const CACHE_NAME = 'digimon-pet-v2';
 const urlsToCache = [
   './',
   './digimon-pet.html',
