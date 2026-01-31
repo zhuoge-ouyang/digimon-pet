@@ -362,6 +362,40 @@
         let currentPoints = 0;
         let totalClicks = 0;
 
+        // 检测是否已安装为 PWA
+        function isInstalledPWA() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true ||
+                   document.referrer.includes('android-app://');
+        }
+
+        // 保存游戏状态到本地存储
+        function saveGameState() {
+            const gameState = {
+                currentStage: currentStage,
+                currentPoints: currentPoints,
+                totalClicks: totalClicks
+            };
+            localStorage.setItem('digimonGameState', JSON.stringify(gameState));
+        }
+
+        // 从本地存储加载游戏状态
+        function loadGameState() {
+            const saved = localStorage.getItem('digimonGameState');
+            if (saved) {
+                try {
+                    const gameState = JSON.parse(saved);
+                    currentStage = gameState.currentStage || 0;
+                    currentPoints = gameState.currentPoints || 0;
+                    totalClicks = gameState.totalClicks || 0;
+                    return true;
+                } catch (e) {
+                    console.log('加载存档失败:', e);
+                }
+            }
+            return false;
+        }
+
         // DOM 元素
         const petContainer = document.getElementById('petContainer');
         const petImage = document.getElementById('petImage');
@@ -443,6 +477,9 @@
                 currentStage++;
                 currentPoints = 0;
                 
+                // 保存进化后的状态
+                saveGameState();
+                
                 petImage.classList.add('evolve-animation');
                 setTimeout(() => {
                     petImage.classList.remove('evolve-animation');
@@ -463,6 +500,9 @@
             
             totalClicks++;
             currentPoints++;
+            
+            // 保存游戏状态
+            saveGameState();
             
             const stage = stages[currentStage];
             
@@ -534,7 +574,17 @@
 
         // 初始化
         createParticles();
+        
+        // 加载保存的游戏状态
+        const hasExistingSave = loadGameState();
         updateUI();
+        
+        // 如果有存档，检查是否需要显示最高等级提示
+        if (hasExistingSave && currentStage >= stages.length - 1 && currentPoints >= stages[currentStage].points) {
+            const hint = document.querySelector('.hint');
+            hint.classList.add('max-level');
+            hint.textContent = '🏆 恭喜！已达到究极体最高等级！';
+        }
 
         // 注册 Service Worker
         if ('serviceWorker' in navigator) {
@@ -549,9 +599,15 @@
             });
         }
 
-        // 添加安装提示
+        // 添加安装提示（仅在浏览器模式下显示，已安装的 PWA 不显示）
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
+            // 如果已经以 PWA 模式运行，不显示安装按钮
+            if (isInstalledPWA()) {
+                e.preventDefault();
+                return;
+            }
+            
             e.preventDefault();
             deferredPrompt = e;
             
@@ -590,6 +646,15 @@
             });
             
             document.body.appendChild(installBtn);
+        });
+        
+        // 监听 PWA 安装完成事件，隐藏安装按钮
+        window.addEventListener('appinstalled', () => {
+            const installBtn = document.getElementById('installBtn');
+            if (installBtn) {
+                installBtn.remove();
+            }
+            console.log('PWA 已安装');
         });
     </script>
 </body>
